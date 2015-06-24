@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html ng-app="fireApp">
+    <head>
+        <title>Firebase Chat</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" href="{{$root.favicon}}" type="image/x-icon" />
+        
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+        <link rel="stylesheet" href="styles.css">
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+        
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+        <script src="https://cdn.firebase.com/js/client/2.2.2/firebase.js"></script>
+        <script src="https://cdn.firebase.com/libs/angularfire/1.0.0/angularfire.min.js"></script>
+        <script src="scrollglue.js"></script>
+
+    </head>
+    <body>
+        <div scroll-glue ng-controller="FireCtrl" class="container-fluid">
+            <div class="row messages-panel" ng-if="user" >
+                <div class="col-xs-12 message" ng-repeat="message in messages">
+                    <img 
+                        ng-src="{{message.avatar}}" 
+                        ng-show="!repeatedUser($index)">
+                    
+                    <p ng-show="!repeatedUser($index)">
+                        <strong>{{message.username}}</strong>
+                    </p>
+                    <p ng-style="getPadding($index)">
+                        {{message.text}}
+                        <strong class="delete" ng-click="messages.$remove(message)">&#x2715;</strong>
+                    </p>                      
+                </div>
+            </div>
+            <div class="row message-form" ng-show="user" >
+                <div class="col-xs-12" style="padding-left: 80px;">
+                    <form ng-submit="addMessage()">
+                        <input ng-model="newMessageText" placeholder="{{info}}" />
+                    </form>                    
+                </div>
+            </div>
+            
+            <div class="row" ng-show="!user" >
+                <div class="col-xs-12">
+                    <button ng-click="authenticate()">Github Login</button>
+                </div>
+            </div>
+        </div>
+        <script>
+            
+            
+            var app = angular.module("fireApp", ["firebase", 'luegg.directives']);
+            
+            app.controller("FireCtrl", function($scope, $firebaseArray, $rootScope) {
+                
+                $scope.info = "loading...";
+                
+                $rootScope.favicon = "";
+                
+                var ref = new Firebase("https://radiant-fire-709.firebaseio.com/");
+
+                $scope.user = ref.getAuth(); //After the oauth redirect and every subsequent load, this is always null
+
+                if($scope.user){
+                    $scope.messages = $firebaseArray(ref);
+                    //when loaded
+                    $scope.messages.$loaded().then(function(){
+                        $scope.info = 'write here...';
+                    });
+                }
+
+                // add new items to the array
+                $scope.addMessage = function() {
+                    $scope.messages.$add({
+                        text: $scope.newMessageText,
+                        username: $scope.user.github.username,
+                        avatar: $scope.user.github.cachedUserProfile.avatar_url,
+                    }).then(function(){
+                        $scope.newMessageText = '';
+                    });
+                };
+
+                //login via github
+                $scope.authenticate = function() {
+                    ref.authWithOAuthPopup('github', function(err, user) {
+                        if (err) {
+                            console.log(err, 'error');
+                        }else if(user){
+                            // already logged in!
+                            $scope.user = user;
+                            // create a synchronized array
+                            $scope.messages = $firebaseArray(ref);
+                            //when loaded
+                            $scope.messages.$loaded().then(function(){
+                                $scope.info = 'write here...';
+                            });                  
+                        }else{
+                            //user logged out
+                        }
+                    });
+                };
+                
+                //logout
+                $scope.logout = function() {
+                    ref.unauth();
+                };
+                
+                $scope.repeatedUser = function(i){
+                    return i > 0 && $scope.messages[i-1].username == $scope.messages[i].username;
+                };
+                
+                $scope.getPadding = function(i){
+                    
+                    var padding = {'padding-left':'0'};
+                    
+                    if(($scope.repeatedUser(i)) || (i==0 && !$scope.messages[i].username)){
+                        padding['padding-left'] = '50px';
+                    }
+                    
+                    return padding;
+                };
+            });
+            
+        </script>
+    </body>
+</html>

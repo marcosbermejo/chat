@@ -1,0 +1,54 @@
+.container-fluid{
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    overflow-y: scroll;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.messages-panel{
+    padding: 0 40px;
+}
+
+.message{
+    padding: 5px;
+    border-radius: 7px;
+}
+
+.message img{
+    width: 40px;
+    float: left;
+    margin-right: 10px;
+}
+
+.message p{
+    margin: 0;
+}
+
+.message p strong{
+    color: grey;
+}
+
+.message .delete{
+    display: none;
+    cursor: pointer;
+}
+
+.message:hover{
+    background-color: beige;
+}
+
+.message:hover .delete{
+    display: inline;
+}
+
+.message-form{
+    border-top: 1px solid black;
+}
+
+.message-form input{
+    width: 100%;
+    font-size: 1.3em;
+    border: none;
+    line-height: 60px;
+}
